@@ -1,0 +1,28 @@
+{
+  "name": "js-scraping",
+  "version": "1.0.0",
+  "description": "Scraping News Site using puppeteer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsc -w & nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdp-gibers/js-scraping.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mdp-gibers/js-scraping/issues"
+  },
+  "homepage": "https://github.com/mdp-gibers/js-scraping#readme",
+  "dependencies": {
+    "puppeteer": "^10.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7",
+    "typescript": "^4.3.2"
+  }
+}
