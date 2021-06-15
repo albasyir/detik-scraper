@@ -38,6 +38,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 var puppeteer = require("puppeteer");
 var fs = require("fs");
+var path = require("path");
+var moment = require("moment");
 // class paging > a untuk paginate ambil href
 (function () { return __awaiter(void 0, void 0, void 0, function () {
     var browser, context, listPage, page, maxPage, noResultFromLast, scraped, list, err_1;
@@ -79,32 +81,37 @@ var fs = require("fs");
                 });
                 console.log("We should not load IMAGE CSS and FONT..");
                 page = 1;
-                maxPage = 10;
+                maxPage = 3;
                 noResultFromLast = false;
                 scraped = [];
                 _a.label = 5;
             case 5:
-                if (!(noResultFromLast == false && maxPage && page >= maxPage)) return [3 /*break*/, 8];
+                if (!(!noResultFromLast && page <= maxPage)) return [3 /*break*/, 8];
                 return [4 /*yield*/, listPage.goto("https://www.detik.com/search/searchall?query=corona&siteid=2&sortby=time&sorttime=0&page=" +
                         page)];
             case 6:
                 _a.sent();
                 console.log(" - Page " + page + " visited");
                 return [4 /*yield*/, listPage.$eval(".list-berita", function (el) {
-                        var articelEl = Array.from(el.getElementsByTagName("article"));
-                        return articelEl.map(function (article) {
+                        var articelEl = Array.from(el.getElementsByTagName("article")).filter(function (articel) {
+                            var _a;
+                            return (_a = articel.getElementsByClassName("category")[0]) === null || _a === void 0 ? void 0 : _a.innerHTML;
+                        });
+                        return articelEl.map(function (articel) {
                             var _a, _b, _c;
                             return ({
-                                title: (_a = article.getElementsByClassName("title")[0]) === null || _a === void 0 ? void 0 : _a.innerHTML,
-                                category: (_b = article.getElementsByClassName("category")[0]) === null || _b === void 0 ? void 0 : _b.innerHTML,
-                                date: (_c = article.getElementsByClassName("date")[0]) === null || _c === void 0 ? void 0 : _c.innerHTML
+                                title: (_a = articel.getElementsByClassName("title")[0]) === null || _a === void 0 ? void 0 : _a.innerHTML,
+                                category: (_b = articel.getElementsByClassName("category")[0]) === null || _b === void 0 ? void 0 : _b.innerHTML,
+                                date: (_c = articel
+                                    .getElementsByClassName("date")[0]) === null || _c === void 0 ? void 0 : _c.innerHTML.split("</span>")[1],
+                                link: articel.getElementsByTagName("a")[0].getAttribute("href")
                             });
                         });
                     })];
             case 7:
                 list = _a.sent();
                 if (list.length > 0) {
-                    scraped.push(list);
+                    scraped.push.apply(scraped, list);
                     page++;
                 }
                 else {
@@ -113,12 +120,12 @@ var fs = require("fs");
                 return [3 /*break*/, 5];
             case 8:
                 console.log("Scaping Done!");
-                fs.writeFileSync("/collection/detik.com.json", scraped.toString());
-                console.log("Saved");
                 return [4 /*yield*/, browser.close()];
             case 9:
                 _a.sent();
                 console.log("Browser closed");
+                fs.writeFileSync(path.join(__dirname, "collection/detik.com/" + moment().format("YYYY-MM-DD_SSS") + ".json"), JSON.stringify(scraped));
+                console.log("Saved");
                 return [3 /*break*/, 11];
             case 10:
                 err_1 = _a.sent();

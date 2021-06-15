@@ -1,5 +1,7 @@
 import * as puppeteer from "puppeteer";
 import * as fs from "fs";
+import * as path from "path";
+import * as moment from "moment";
 // class paging > a untuk paginate ambil href
 
 (async () => {
@@ -33,30 +35,52 @@ import * as fs from "fs";
     console.log("We should not load IMAGE CSS and FONT..");
 
     let page: number = 1;
-    let maxPage: number = 10;
+    let maxPage: number = 3;
     let noResultFromLast: boolean = false;
     let scraped: Array<Object> = [];
 
-    while (noResultFromLast == false && maxPage && page >= maxPage) {
+    while (!noResultFromLast && page <= maxPage) {
       await listPage.goto(
         "https://www.detik.com/search/searchall?query=corona&siteid=2&sortby=time&sorttime=0&page=" +
           page
       );
 
       console.log(" - Page " + page + " visited");
-
+      // get list
       const list = await listPage.$eval(".list-berita", (el) => {
-        let articelEl = Array.from(el.getElementsByTagName("article"));
+        let articelEl = Array.from(el.getElementsByTagName("article")).filter(
+          (articel) => {
+            return articel.getElementsByClassName("category")[0]?.innerHTML;
+          }
+        );
 
-        return articelEl.map((article) => ({
-          title: article.getElementsByClassName("title")[0]?.innerHTML,
-          category: article.getElementsByClassName("category")[0]?.innerHTML,
-          date: article.getElementsByClassName("date")[0]?.innerHTML,
+        return articelEl.map((articel) => ({
+          title: articel.getElementsByClassName("title")[0]?.innerHTML,
+          category: articel.getElementsByClassName("category")[0]?.innerHTML,
+          date: articel
+            .getElementsByClassName("date")[0]
+            ?.innerHTML.split("</span>")[1],
+          link: articel.getElementsByTagName("a")[0].getAttribute("href"),
         }));
       });
 
+      // get detail
+      const detailPage = await context.newPage();
+
+      list.map((articel) => {
+        detailPage.goto(articel.link);
+
+        // #detikdetailtext untuk detail artikel pada detikTravel, detikhealt
+        // .detail__body-text untuk detail artkel pada detikNews
+
+        // .detail__body-tag untuk ambil tag pada detikNews, detikInet
+        // semuanya buang .linksisip
+
+        return articel;
+      });
+
       if (list.length > 0) {
-        scraped.push(list);
+        scraped.push(...list);
         page++;
       } else {
         noResultFromLast = true;
@@ -65,13 +89,18 @@ import * as fs from "fs";
 
     console.log("Scaping Done!");
 
-    fs.writeFileSync("collection/detik.com.json", scraped.toString());
+    await browser.close();
+    console.log("Browser closed");
+
+    fs.writeFileSync(
+      path.join(
+        __dirname,
+        `collection/detik.com/${moment().format("YYYY-MM-DD_SSS")}.json`
+      ),
+      JSON.stringify(scraped)
+    );
 
     console.log("Saved");
-
-    await browser.close();
-
-    console.log("Browser closed");
   } catch (err) {
     console.error(`'Puppeteer Error Detencted -> ${err}'`);
   }
