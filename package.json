@@ -4,8 +4,7 @@
   "description": "Scraping News Site using puppeteer",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsc -w & nodemon index.js"
+    "scrap-detik": "tsc & nodemon src/DetikScraper.ts"
   },
   "repository": {
     "type": "git",
@@ -22,6 +21,8 @@
     "puppeteer": "^10.0.0"
   },
   "devDependencies": {
+    "@types/puppeteer": "^5.4.3",
+    "ts-node": "^10.0.0",
     "nodemon": "^2.0.7",
     "typescript": "^4.3.2"
   }
