@@ -76,6 +76,10 @@ import * as moment from "moment";
         // .detail__body-tag untuk ambil tag pada detikNews, detikInet
         // semuanya buang .linksisip
 
+        // ONLY FROM finance, news, travel, food, health
+
+        let contentContaner = detailPage.waitForSelector("#detikdetailtext");
+
         return articel;
       });
 
