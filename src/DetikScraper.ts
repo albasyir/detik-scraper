@@ -2,6 +2,7 @@ import * as puppeteer from "puppeteer";
 import * as fs from "fs";
 import * as path from "path";
 import * as moment from "moment";
+import * as chalk from "chalk";
 
 (async () => {
   try {
@@ -72,15 +73,16 @@ import * as moment from "moment";
      */
     let page: number = 1;
     let maxPage: number = 3;
-    let noResultFromLast: boolean = false;
+    let stillSearch: boolean = true;
     let scraped: Array<Object> = [];
-    while (!noResultFromLast && page <= maxPage) {
+    while (stillSearch && page <= maxPage) {
       await listPage.goto(
         "https://www.detik.com/search/searchall?query=corona&siteid=2&sortby=time&sorttime=0&page=" +
           page
       );
 
-      console.log(" - Page " + page + " visited");
+      console.info(" - " + chalk.yellow("Paginate " + page + " visited"));
+      console.info("   Try to get list");
 
       /**
        * Get list and find important information that we grab
@@ -108,7 +110,7 @@ import * as moment from "moment";
        *
        */
       list.map(async (articel) => {
-        // detailPage.goto(articel.link);
+        await detailPage.goto(articel.link);
         // #detikdetailtext untuk detail artikel pada detikTravel, detikhealt
         // .detail__body-text untuk detail artkel pada detikNews
         // .detail__body-tag untuk ambil tag pada detikNews, detikInet
@@ -119,18 +121,17 @@ import * as moment from "moment";
       });
 
       /**
-       * Desicion for next page and save, or we stop and next
+       * Desicion for next page and save, or we stop searching
        *
        */
       if (list.length > 0) {
         scraped.push(...list);
         page++;
       } else {
-        noResultFromLast = true;
+        stillSearch = false;
+        console.log("Scaping Done!");
       }
     }
-
-    console.log("Scaping Done!");
 
     /**
      * Close Browser
