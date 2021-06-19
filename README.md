@@ -1,2 +1,9 @@
-# web-scapping
-Getting Detik dll
+# Javascript Scraping
+
+Getting data from WEB and API, Tokenize and Open API for our data collection
+
+# How get start
+
+- Create your typescript at `src` folder
+- Type you code
+- Run with `npx ts-node src/your.ts`
