@@ -12,6 +12,10 @@ interface ScrapDetailResult {
   content?: Array<string>;
 }
 
+/**
+ * Scrap Category Hendler
+ *
+ */
 const scrap = {
   async detikTravel(page: puppeteer.Page) {
     // skip kalo ke 20.detik.com
@@ -142,14 +146,14 @@ const scrap = {
         list.filter((articel) => Object.keys(scrap).includes(articel.category))
       );
 
+      /**
+       * Setting page for news detail
+       *
+       */
       let result = await Promise.all(
         list.map(async (articel) => {
           console.log("  ", articel.category, articel.link);
 
-          /**
-           * Setting page for news detail
-           *
-           */
           const detailPage = await context.newPage();
           await detailPage.setRequestInterception(true).then(() => {
             detailPage.on("request", (req: puppeteer.HTTPRequest) => {
@@ -167,19 +171,17 @@ const scrap = {
               console.warn(chalk.yellow(msg));
           });
 
-          if (scrap[articel.category]) {
-            await detailPage.goto(articel.link);
-            let detail: ScrapDetailResult = await scrap[articel.category](
-              detailPage
-            );
+          await detailPage.goto(articel.link);
+          let detail: ScrapDetailResult = await scrap[articel.category](
+            detailPage
+          );
 
-            if (detail) {
-              articel.from = detail.from;
-              articel.content = detail.content;
-            }
-
-            await detailPage.close();
+          if (detail) {
+            articel.from = detail.from;
+            articel.content = detail.content;
           }
+
+          await detailPage.close();
 
           return articel;
         })
@@ -205,7 +207,7 @@ const scrap = {
     fs.writeFileSync(
       path.join(
         __dirname,
-        `collection/detik.com/${moment().format(
+        `collection/detik.com/DEV-${moment().format(
           "YYYY-MM-DD"
         )}_${firstPage}-${maxPage}.json`
       ),
