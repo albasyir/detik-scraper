@@ -10,4 +10,4 @@ Getting data from WEB and API, Tokenize and Open API for our data collection
 
 # Rule
 
-Save your collection to `docs/`, may it confusing, thats coz limitation of github page
+Save your collection to `public/`
