@@ -16,4 +16,4 @@ https://gibers-collection-1.netlify.app/detik.com/2021-06-20_1-1000.json
 ## Our Rule
 
 - Save your collection to `public/`
-- We have to use typescript
+- We have to use typescript with puppeteer for scraping tool
