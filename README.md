@@ -9,4 +9,5 @@ Getting data from WEB and API, Tokenize and Open API for our data collection
 - Run with `npx ts-node src/your.ts`
 
 # Rule
-Save your collection to `src/collection`
+
+Save your collection to `docs/`, may it confusing, thats coz limitation of github page
