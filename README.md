@@ -9,7 +9,8 @@ https://gibers-collection-1.netlify.app/detik.com/2021-06-20_1-1000.json
 
 ## How to Contribute With
 
-- Create your typescript at `src` folder
-- Type you code
-- Run with `npx ts-node src/your.ts` (Must TS)
+- Create your TypeScript at `src` folder
+- Type your code
+- Please implement `src/Contracts/ArticleContract` for collection result
+- Run with `npx ts-node src/your.ts`
 - Save your collection to `public/`

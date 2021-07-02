@@ -21,7 +21,8 @@
     "@types/moment": "^2.13.0",
     "chalk": "^3.0.0",
     "moment": "^2.29.1",
-    "puppeteer": "^10.0.0"
+    "puppeteer": "^10.0.0",
+    "sastrawijs": "^1.0.0"
   },
   "devDependencies": {
     "@types/puppeteer": "^5.4.3",

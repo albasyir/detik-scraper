@@ -1,8 +1,11 @@
+import ArticelContract from "./Contracts/ArticleContract";
+
 import * as puppeteer from "puppeteer";
 import * as fs from "fs";
 import * as path from "path";
 import * as moment from "moment";
 import * as chalk from "chalk";
+import * as sastrawi from "sastrawijs"
 
 let firstPage: number = 1;
 let maxPage: number = 1000;
@@ -17,7 +20,7 @@ interface ScrapDetailResult {
  *
  */
 const scrap = {
-  async detikTravel(page: puppeteer.Page) {
+  async detikTravel(page: puppeteer.Page): Promise<ScrapDetailResult> {
     // skip kalo ke 20.detik.com
     if (page.url().includes("20.detik.com")) return null;
 
@@ -28,17 +31,12 @@ const scrap = {
 
     return await page.$eval(content, (el) => {
       let article: ScrapDetailResult = {
-        from: "",
-        content: [],
+        from: Array.from(el.getElementsByTagName("b"))[0]?.innerText ||
+          Array.from(el.getElementsByTagName("strong"))[0]?.innerText,
+        
+        content: Array.from(el.getElementsByTagName("p")).map(
+        (el) => el.innerHTML)
       };
-
-      article.from =
-        Array.from(el.getElementsByTagName("b"))[0]?.innerText ||
-        Array.from(el.getElementsByTagName("strong"))[0]?.innerText;
-
-      article.content = Array.from(el.getElementsByTagName("p")).map(
-        (el) => el.innerHTML
-      );
 
       return article;
     });
@@ -106,6 +104,13 @@ const scrap = {
     console.info("news paginate tab created, and optimized");
 
     /**
+     * Pripare Tokenizer
+     * 
+     */
+    const stemmer = new sastrawi.Stemmer();
+    const tokenizer = new sastrawi.Tokenizer();
+
+    /**
      * Do scrap
      *
      */
@@ -125,25 +130,27 @@ const scrap = {
        * Get list and find important information that we grab
        *
        */
-      let list = await listPage.$eval(".list-berita", (el) => {
+      let articles: Array<ArticelContract> = await listPage.$eval(".list-berita", (el) => {
         let articelEl = Array.from(el.getElementsByTagName("article")).filter(
           (articel) => articel.getElementsByClassName("category")[0]?.innerHTML
         );
 
         return articelEl.map((articel) => ({
           title: articel.getElementsByClassName("title")[0]?.innerHTML,
-          from: "",
           category: articel.getElementsByClassName("category")[0]?.innerHTML,
           date: articel
             .getElementsByClassName("date")[0]
             ?.innerHTML.split("</span>")[1],
           link: articel.getElementsByTagName("a")[0].getAttribute("href"),
-          content: [],
         }));
       });
 
-      list = await Promise.all(
-        list.filter((articel) => Object.keys(scrap).includes(articel.category))
+      /**
+       * Get articel only data that the our target
+       * 
+       */
+      articles = await Promise.all(
+        articles.filter((articel: ArticelContract) => Object.keys(scrap).includes(articel.category))
       );
 
       /**
@@ -151,7 +158,7 @@ const scrap = {
        *
        */
       let result = await Promise.all(
-        list.map(async (articel) => {
+        articles.map(async (articel: ArticelContract) => {
           console.log("  ", articel.category, articel.link);
 
           const detailPage = await context.newPage();
@@ -165,12 +172,20 @@ const scrap = {
             });
           });
 
+          /**
+           * Console to show error from backend
+           * 
+           */
           detailPage.on("console", (consoleObj) => {
             const msg = consoleObj.text();
             if (!msg.includes("net::ERR_FAILED"))
               console.warn(chalk.yellow(msg));
           });
-
+          
+          /**
+           * Visit the page for get content and from
+           * 
+           */
           await detailPage.goto(articel.link);
           let detail: ScrapDetailResult = await scrap[articel.category](
             detailPage
@@ -178,8 +193,22 @@ const scrap = {
 
           if (detail) {
             articel.from = detail.from;
-            articel.content = detail.content;
+
+            articel.contents = detail.content.reduce((result: Array<string>, paragraph: string) => {
+              // skip empty paragraph
+              if (!paragraph || paragraph == '') return;
+
+              // clear from element
+              paragraph = paragraph.replace(new RegExp('<[^>]*>', 'g'), '');
+
+              // tokenize
+
+
+              result.push(paragraph);
+            }, []);
           }
+
+          console.log(articel)
 
           await detailPage.close();
 
