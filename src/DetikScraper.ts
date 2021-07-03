@@ -8,7 +8,7 @@ import * as chalk from "chalk";
 import * as sastrawi from "sastrawijs"
 
 let firstPage: number = 1;
-let maxPage: number = 1000;
+let maxPage: number = 10; // max 1111
 
 interface ScrapDetailResult {
   from: string;
@@ -104,7 +104,7 @@ const scrap = {
     console.info("news paginate tab created, and optimized");
 
     /**
-     * Pripare Tokenizer
+     * Tokenizer and Stemmer of the Contents Features
      * 
      */
     const stemmer = new sastrawi.Stemmer();
@@ -193,22 +193,35 @@ const scrap = {
 
           if (detail) {
             articel.from = detail.from;
+            articel.contents = [];
+            articel.feature = [];
+            articel.tokenized = [];
 
-            articel.contents = detail.content.reduce((result: Array<string>, paragraph: string) => {
+            detail.content.forEach((paragraph: string) => {
               // skip empty paragraph
               if (!paragraph || paragraph == '') return;
 
               // clear from element
               paragraph = paragraph.replace(new RegExp('<[^>]*>', 'g'), '');
 
-              // tokenize
+              // push to our content result
+              articel.contents.push(paragraph);
 
+              // tokenized string
+              let tokenizedWords: Array<string> = tokenizer.tokenize(paragraph);
+              articel.tokenized.push(tokenizedWords);
 
-              result.push(paragraph);
-            }, []);
+              // FILL feature
+              for (let word of tokenizedWords) {
+                let stemmed: string = stemmer.stem(word);
+
+                // fill feature array of
+                if (!articel.feature.includes(stemmed)) {
+                  articel.feature.push(stemmed);
+                }
+              }
+            })
           }
-
-          console.log(articel)
 
           await detailPage.close();
 
@@ -236,7 +249,7 @@ const scrap = {
     fs.writeFileSync(
       path.join(
         __dirname,
-        `collection/detik.com/DEV-${moment().format(
+        `../public/detik.com/${moment().format(
           "YYYY-MM-DD"
         )}_${firstPage}-${maxPage}.json`
       ),

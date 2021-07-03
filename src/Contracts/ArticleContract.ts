@@ -31,9 +31,19 @@ export default interface ArticleContract {
    * 
    */
   contents?: Array<string>;
+
+  /**
+   * Tokenize nlp
+   * 
+   * Tokensize of contents 
+   * 
+   * - first dimantion is representaton of paragraph
+   * - second dimantion is representation of array of tokenized string
+   */
+  tokenized?: Array<Array<string>>
   
   /**
-   * The words that Article use
+   * The words that Article use after tokenized by
    * 
    * list of String as Word
    */
