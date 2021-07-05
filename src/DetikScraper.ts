@@ -43,12 +43,27 @@ const scrap = {
   },
 
   // async detikNews(page: puppeteer.Page) {
+  //    if (page.url().includes("20.detik.com")) return null;
   //    TODO
   // },
 
-  // async detikFinance(page: puppeteer.Page) {
-  //    TODO
-  // },
+  async detikFinance(page: puppeteer.Page) {
+    if (page.url().includes("20.detik.com")) return null;
+    
+    let content: string = ".itp_bodycontent"
+
+    return await page.$eval(content, (el) => {
+      let articel: ScrapDetailResult = {
+        from:
+          Array.from(el.getElementsByTagName('strong'))[0]?.innerText ||
+          Array.from(el.getElementsByTagName('b'))[0]?.innerText,
+        
+        content: Array.from(el.getElementsByTagName('p')).map(el => el.innerHTML)
+      };
+
+      return articel;
+    });
+  },
 
   // async detikFood(page: puppeteer.Page) {
   //    TODO
