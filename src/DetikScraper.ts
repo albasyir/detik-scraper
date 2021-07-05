@@ -69,9 +69,22 @@ const scrap = {
   //    TODO
   // },
 
-  // async detikHealth(page: puppeteer.Page) {
-  //    TODO
-  // },
+  async detikHealth(page: puppeteer.Page): Promise<ScrapDetailResult> {
+    if (page.url().includes("20.detik.com")) return null;
+    
+    let content: string = "#detikdetailtext";
+
+    return page.$eval(content, (el) => {
+      let articel: ScrapDetailResult = {
+        from:
+          Array.from(el.getElementsByTagName('strong'))[0].innerText || 
+          Array.from(el.getElementsByTagName('b'))[0].innerText,
+        content: Array.from(el.getElementsByTagName('p')).map(p => p.innerHTML)
+      }
+
+      return articel;
+    });
+  },
 };
 
 (async () => {
