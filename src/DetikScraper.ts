@@ -34,8 +34,7 @@ const scrap = {
         from: Array.from(el.getElementsByTagName("b"))[0]?.innerText ||
           Array.from(el.getElementsByTagName("strong"))[0]?.innerText,
         
-        content: Array.from(el.getElementsByTagName("p")).map(
-        (el) => el.innerHTML)
+        content: Array.from(el.getElementsByTagName("p")).map(p => p.innerHTML)
       };
 
       return article;
@@ -44,6 +43,7 @@ const scrap = {
 
   async detikNews(page: puppeteer.Page) {
     if (page.url().includes("20.detik.com")) return null;
+    if (page.url().includes("/detiktv/")) return null;
     
     let content: string = ".itp_bodycontent"
 
@@ -53,7 +53,7 @@ const scrap = {
           Array.from(el.getElementsByTagName('strong'))[0]?.innerText ||
           Array.from(el.getElementsByTagName('b'))[0]?.innerText,
         
-        content: Array.from(el.getElementsByTagName('p')).map(el => el.innerHTML)
+        content: Array.from(el.getElementsByTagName('p')).map(p => p.innerHTML)
       };
 
       return articel;
@@ -62,6 +62,7 @@ const scrap = {
 
   async detikFinance(page: puppeteer.Page): Promise<ScrapDetailResult> {
     if (page.url().includes("20.detik.com")) return null;
+    if (page.url().includes("/infografis/")) return null;
     
     let content: string = ".itp_bodycontent"
 
@@ -71,7 +72,7 @@ const scrap = {
           Array.from(el.getElementsByTagName('strong'))[0]?.innerText ||
           Array.from(el.getElementsByTagName('b'))[0]?.innerText,
         
-        content: Array.from(el.getElementsByTagName('p')).map(el => el.innerHTML)
+        content: Array.from(el.getElementsByTagName('p')).map(p => p.innerHTML)
       };
 
       return articel;
@@ -89,7 +90,7 @@ const scrap = {
           Array.from(el.getElementsByTagName('strong'))[0]?.innerText ||
           Array.from(el.getElementsByTagName('b'))[0]?.innerText,
         
-        content: Array.from(el.getElementsByTagName('p')).map(el => el.innerHTML)
+        content: Array.from(el.getElementsByTagName('p')).map(p => p.innerHTML)
       };
 
       return articel;
@@ -98,6 +99,7 @@ const scrap = {
 
   async detikHealth(page: puppeteer.Page): Promise<ScrapDetailResult> {
     if (page.url().includes("20.detik.com")) return null;
+    if (page.url().includes("/detiktv/")) return null;
     
     let content: string = "#detikdetailtext";
 
@@ -283,6 +285,8 @@ const scrap = {
           return articel;
         })
       );
+
+      result = result.filter(data => data.contents && data.contents.length > 0);
 
       /**
        * Desicion for next page and save, or we stop searching
