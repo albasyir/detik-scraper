@@ -11,7 +11,7 @@ import * as sastrawi from "sastrawijs";
  * Init & Declare prefix file, and pagination
  */
 const prefixFile: string = "example";
-let firstPagination: number = 1;
+let currentPage: number = 1;
 const lastPagination: number = 3;
 const BaseURL: string = "https://indeks.kompas.com/?site=all&q=corona&page=";
 (async () => {
@@ -60,18 +60,18 @@ const BaseURL: string = "https://indeks.kompas.com/?site=all&q=corona&page=";
      */
     let scraped: Array<Object> = [];
 
-    while (firstPagination <= lastPagination) {
+    while (currentPage <= lastPagination) {
       listPage.on("console", (consoleObj) => {
         const msg = consoleObj.text();
         if (!msg.includes("net::ERR_FAILED")) console.warn(chalk.yellow(msg));
       });
-      await listPage.goto(BaseURL + firstPagination);
+      await listPage.goto(BaseURL + currentPage);
 
-      console.log(" - Page " + firstPagination + " visited");
+      console.log(" - Page " + currentPage + " visited");
 
       let content: string = ".latest--indeks";
 
-      const list = await listPage.$eval(content, (el) => {
+      let list = await listPage.$eval(content, (el) => {
         return Array.from(el.getElementsByClassName("article__list")).map(
           (row) => {
             let article: ArticleContract = {
@@ -92,53 +92,85 @@ const BaseURL: string = "https://indeks.kompas.com/?site=all&q=corona&page=";
        * Create new Browser and tab for detail page for every news
        */
 
-      list.map(async (row) => {
-        const context = await browser.createIncognitoBrowserContext();
-        const detailPage = await context.newPage();
-        await detailPage.setRequestInterception(true);
-        detailPage.on("request", (req) => {
-          const type = req.resourceType();
-          if (type == "document") {
-            req.continue();
-          } else {
-            req.abort();
-          }
-        });
-        detailPage.on("console", (consoleObj) => {
-          const msg = consoleObj.text();
-          if (!msg.includes("net::ERR_FAILED")) console.warn(chalk.yellow(msg));
-        });
-        /**
-         * going to detail page
-         */
-        await detailPage.goto(row.link);
-        let content: string = ".read__content";
-
-        const detail: string[] = await detailPage.$eval(content, (el) => {
-          return Array.from(el.getElementsByTagName("p")).map((data) => {
-            return data.innerHTML;
+      list = await Promise.all(
+        list.map(async (row) => {
+          const context = await browser.createIncognitoBrowserContext();
+          const detailPage = await context.newPage();
+          await detailPage.setRequestInterception(true);
+          detailPage.on("request", (req) => {
+            const type = req.resourceType();
+            if (type == "document") {
+              req.continue();
+            } else {
+              req.abort();
+            }
           });
-        });
-        detail.forEach((content: string) => {
-          // trim it
-          content = content.trim();
+          detailPage.on("console", (consoleObj) => {
+            const msg = consoleObj.text();
+            if (!msg.includes("net::ERR_FAILED"))
+              console.warn(chalk.yellow(msg));
+          });
+          /**
+           * going to detail page
+           */
+          await detailPage.goto(row.link);
+          let content: string = ".read__content";
 
-          // clear from html element
-          content = content.replace(new RegExp("<[^>]*>", "g"), "");
+          const detail: string[] = await detailPage.$eval(content, (el) => {
+            return Array.from(el.getElementsByTagName("p")).map((data) => {
+              return data.innerHTML;
+            });
+          });
+          detail.forEach((content: string) => {
+            // trim it
+            content = content.trim();
 
-          // clear line breaks
-          content = content.replace("/(\r\n|\n|\r)/gm", "");
-          row.contents.push(content)
-        });
-        console.log(row);
-        
-      });
+            // clear from html element
+            content = content.replace(new RegExp("<[^>]*>", "g"), "");
+
+            // clear line breaks
+            content = content.replace("/(\r\n|\n|\r)/gm", "");
+            row.contents.push(content);
+          });
+          /**
+           * close detail page
+           */
+          await detailPage.close();
+
+          return row;
+        })
+      );
+
+      if (lastPagination >= currentPage) {
+        scraped.push(...list);
+        console.log(scraped);
+
+        currentPage++;
+      }
     }
 
     console.log("Scraping Done!");
 
     await browser.close();
     console.log("Browser closed");
+
+    console.log("Saving...");
+    /**
+     * Wrtie our result to JSON
+     *
+     */
+    let timenameText = moment().format("YYYY-MM-DD_HH-mm-ss");
+    let limitText = `${currentPage}-${lastPagination}`;
+    let filename = `${prefixFile}_${timenameText}_${limitText}`;
+
+    fs.writeFileSync(
+      path.join(__dirname, `../public/kompas.com/${filename}.json`),
+      JSON.stringify(scraped)
+    );
+
+    console.log("Saved");
+
+    process.exit();
   } catch (err) {
     console.error(`'Puppeteer Error Detected -> ${err}'`);
   }
