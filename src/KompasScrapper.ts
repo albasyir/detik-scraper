@@ -11,7 +11,7 @@ import * as sastrawi from "sastrawijs";
  * Init & Declare prefix file, and pagination
  */
 const prefixFile: string = "example";
-const firstPagination: number = 1;
+let firstPagination: number = 1;
 const lastPagination: number = 3;
 const BaseURL: string = "https://indeks.kompas.com/?site=all&q=corona&page=";
 (async () => {
@@ -68,23 +68,71 @@ const BaseURL: string = "https://indeks.kompas.com/?site=all&q=corona&page=";
       await listPage.goto(BaseURL + firstPagination);
 
       console.log(" - Page " + firstPagination + " visited");
+
       let content: string = ".latest--indeks";
+
       const list = await listPage.$eval(content, (el) => {
         return Array.from(el.getElementsByClassName("article__list")).map(
           (row) => {
-            let article = {
+            let article: ArticleContract = {
               title: row.getElementsByClassName("article__link")[0].innerHTML,
-              category: row.getElementsByClassName("article__subtitle")[0].innerHTML,
-              date: row.getElementsByClassName("article__date")[0].innerHTML
-            }
-            
-            console.log(article);
-            
+              category:
+                row.getElementsByClassName("article__subtitle")[0].innerHTML,
+              date: row.getElementsByClassName("article__date")[0].innerHTML,
+              link: row.getElementsByTagName("a")[0].getAttribute("href"),
+              contents: [],
+            };
+
             return article;
           }
         );
       });
-      console.log(list);
+
+      /**
+       * Create new Browser and tab for detail page for every news
+       */
+
+      list.map(async (row) => {
+        const context = await browser.createIncognitoBrowserContext();
+        const detailPage = await context.newPage();
+        await detailPage.setRequestInterception(true);
+        detailPage.on("request", (req) => {
+          const type = req.resourceType();
+          if (type == "document") {
+            req.continue();
+          } else {
+            req.abort();
+          }
+        });
+        detailPage.on("console", (consoleObj) => {
+          const msg = consoleObj.text();
+          if (!msg.includes("net::ERR_FAILED")) console.warn(chalk.yellow(msg));
+        });
+        /**
+         * going to detail page
+         */
+        await detailPage.goto(row.link);
+        let content: string = ".read__content";
+
+        const detail: string[] = await detailPage.$eval(content, (el) => {
+          return Array.from(el.getElementsByTagName("p")).map((data) => {
+            return data.innerHTML;
+          });
+        });
+        detail.forEach((content: string) => {
+          // trim it
+          content = content.trim();
+
+          // clear from html element
+          content = content.replace(new RegExp("<[^>]*>", "g"), "");
+
+          // clear line breaks
+          content = content.replace("/(\r\n|\n|\r)/gm", "");
+          row.contents.push(content)
+        });
+        console.log(row);
+        
+      });
     }
 
     console.log("Scraping Done!");
