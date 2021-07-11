@@ -14,6 +14,11 @@ const prefixFile: string = "example";
 let currentPage: number = 1;
 const lastPagination: number = 3;
 const BaseURL: string = "https://indeks.kompas.com/?site=all&q=corona&page=";
+interface ScrapDetailResult {
+  from: string;
+  contents?: Array<string>;
+}
+
 (async () => {
   try {
     /**
@@ -35,7 +40,20 @@ const BaseURL: string = "https://indeks.kompas.com/?site=all&q=corona&page=";
     const listPage = await context.newPage();
 
     console.log("Browser launched");
-
+    const params = {
+      async kompasTravel(page: puppeteer.Page): Promise<ScrapDetailResult> {
+        let content: string = "read__content";
+        return await page.$eval(content, (el) => {
+          let article: ScrapDetailResult = {
+            from: el.getElementsByTagName("strong")[0].innerText,
+            contents: Array.from(el.getElementsByTagName("p")).map(
+              (p) => p.innerHTML
+            ),
+          };
+          return article;
+        });
+      },
+    };
     /**
      *
      *  Optimize Fetching Data
