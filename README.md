@@ -1,6 +1,6 @@
-# Javascript Scraping
+# Detik Scraper
 
-Getting data from WEB and API, Tokenize and Open API for our data collection
+Get list and detail of news of detik.com
 
 ## How to get collection
 
